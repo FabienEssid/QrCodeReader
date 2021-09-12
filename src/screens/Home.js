@@ -18,18 +18,7 @@ const Home = ({ navigation }) => {
   const cameraRef = React.useRef();
   const overlayRef = React.useRef();
 
-  const pauseCameraPreview = () => {
-    if (cameraRef?.current) {
-      cameraRef.current.pausePreview();
-    }
-  };
-
-  const resumeCameraPreview = () => {
-    if (cameraRef?.current) {
-      cameraRef.current.resumePreview();
-    }
-  };
-
+  // Overlay methods
   const openOverlay = () => {
     if (overlayRef?.current) {
       overlayRef.current.open();
@@ -42,6 +31,33 @@ const Home = ({ navigation }) => {
     }
   };
 
+  // React Native Camera methods
+  const pauseCameraPreview = () => {
+    if (cameraRef?.current) {
+      cameraRef.current.pausePreview();
+    }
+  };
+
+  const resumeCameraPreview = () => {
+    if (cameraRef?.current) {
+      cameraRef.current.resumePreview();
+    }
+  };
+
+  const handleBarCodeRead = e => {
+    setData(e?.data);
+    openOverlay();
+    pauseCameraPreview();
+    registerBarCode();
+  };
+
+  const handleBackdropPress = () => {
+    closeOverlay();
+    resumeCameraPreview();
+  };
+
+  const registerBarCode = () => {};
+
   return (
     <Div flex={1}>
       <RNCamera
@@ -49,11 +65,7 @@ const Home = ({ navigation }) => {
         style={styles.cameraContainer}
         type={RNCamera.Constants.Type.back}
         barCodeTypes={[RNCamera.Constants.BarCodeType.qr]}
-        onBarCodeRead={e => {
-          setData(e?.data);
-          openOverlay();
-          pauseCameraPreview();
-        }}
+        onBarCodeRead={handleBarCodeRead}
         androidCameraPermissionOptions={{
           title: 'Utilisation de la caméra',
           message:
@@ -86,10 +98,7 @@ const Home = ({ navigation }) => {
         ref={overlayRef}
         p="lg"
         h="50%"
-        onBackdropPress={() => {
-          closeOverlay();
-          resumeCameraPreview();
-        }}>
+        onBackdropPress={handleBackdropPress}>
         <Text fontWeight="bold" fontSize="lg">
           Résultat du QR code
         </Text>
