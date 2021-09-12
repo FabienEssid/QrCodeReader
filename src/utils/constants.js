@@ -1,0 +1,1 @@
+export const QR_CODE_HISTORY = 'QR_CODE_HISTORY';

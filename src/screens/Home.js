@@ -1,13 +1,39 @@
-import React, { useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 import { Div, Overlay, Text } from 'react-native-magnus';
 import BarcodeMask from 'react-native-barcode-mask';
 import { RNCamera } from 'react-native-camera';
+import { useAsyncStorage } from '@react-native-async-storage/async-storage';
+import { QR_CODE_HISTORY } from '../utils/constants';
 
 const Home = ({ navigation }) => {
   console.log({ navigation });
 
+  const { getItem: getBarCodeHistory, setItem: setBarCodeHistory } =
+    useAsyncStorage(QR_CODE_HISTORY);
+
+  const [shouldReadBarCode, setShouldReadBarCode] = useState(true);
   const [data, setData] = useState(null);
+  const [barCodeHistoryToDisplay, setBarCodeHistoryToDisplay] = useState([]);
+
+  const initializeBarCodeHistoryToDisplay = useCallback(async () => {
+    let barCodeHistory = await getBarCodeHistory();
+
+    try {
+      barCodeHistory = barCodeHistory ? JSON.parse(barCodeHistory) : [];
+    } catch (e) {
+      console.error(
+        '[Home.js:initializeBarCodeHistoryToDisplay]: An error occurred while trying to parse data from AsyncStorage',
+        { e },
+      );
+    }
+
+    setBarCodeHistoryToDisplay(barCodeHistory);
+  }, [setBarCodeHistoryToDisplay, getBarCodeHistory]);
+
+  useEffect(() => {
+    initializeBarCodeHistoryToDisplay();
+  }, [initializeBarCodeHistoryToDisplay]);
 
   const onLinkPressed = link => {
     Linking.openURL(link).catch(e =>
@@ -44,19 +70,57 @@ const Home = ({ navigation }) => {
     }
   };
 
+  // Methods to manage bar codes
   const handleBarCodeRead = e => {
-    setData(e?.data);
-    openOverlay();
-    pauseCameraPreview();
-    registerBarCode();
+    if (shouldReadBarCode) {
+      setShouldReadBarCode(false);
+
+      const { data: barCode } = e || { data: null };
+
+      setData(barCode);
+      openOverlay();
+      pauseCameraPreview();
+      registerBarCode(barCode);
+    }
   };
 
   const handleBackdropPress = () => {
+    setShouldReadBarCode(true);
     closeOverlay();
     resumeCameraPreview();
   };
 
-  const registerBarCode = () => {};
+  const registerBarCode = async barCodeToRegister => {
+    let barCodeHistory;
+    try {
+      barCodeHistory = await getBarCodeHistory();
+    } catch (e) {
+      console.error(
+        '[Home.js:registerBarCode]: An error occcurred while trying to get item from AsyncStorage',
+        { e },
+      );
+    }
+
+    try {
+      barCodeHistory = barCodeHistory ? JSON.parse(barCodeHistory) : [];
+    } catch (e) {
+      console.error(
+        '[Home.js:registerBarCode]: An error ocurred while trying to parse data from AsyncStorage',
+        { e },
+      );
+    }
+
+    try {
+      await setBarCodeHistory(
+        JSON.stringify([...barCodeHistory, barCodeToRegister]),
+      );
+    } catch (e) {
+      console.error(
+        '[Home.js:registerBarCode]: An error occurred while trying to set item in AsyncStorage',
+        { e },
+      );
+    }
+  };
 
   return (
     <Div flex={1}>
