@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Linking, StyleSheet, View } from 'react-native';
 import { Div, Overlay, Text } from 'react-native-magnus';
 import BarcodeMask from 'react-native-barcode-mask';
@@ -6,34 +6,12 @@ import { RNCamera } from 'react-native-camera';
 import { useAsyncStorage } from '@react-native-async-storage/async-storage';
 import { QR_CODE_HISTORY } from '../utils/constants';
 
-const Home = ({ navigation }) => {
-  console.log({ navigation });
-
+const Home = () => {
   const { getItem: getBarCodeHistory, setItem: setBarCodeHistory } =
     useAsyncStorage(QR_CODE_HISTORY);
 
   const [shouldReadBarCode, setShouldReadBarCode] = useState(true);
   const [data, setData] = useState(null);
-  const [barCodeHistoryToDisplay, setBarCodeHistoryToDisplay] = useState([]);
-
-  const initializeBarCodeHistoryToDisplay = useCallback(async () => {
-    let barCodeHistory = await getBarCodeHistory();
-
-    try {
-      barCodeHistory = barCodeHistory ? JSON.parse(barCodeHistory) : [];
-    } catch (e) {
-      console.error(
-        '[Home.js:initializeBarCodeHistoryToDisplay]: An error occurred while trying to parse data from AsyncStorage',
-        { e },
-      );
-    }
-
-    setBarCodeHistoryToDisplay(barCodeHistory);
-  }, [setBarCodeHistoryToDisplay, getBarCodeHistory]);
-
-  useEffect(() => {
-    initializeBarCodeHistoryToDisplay();
-  }, [initializeBarCodeHistoryToDisplay]);
 
   const onLinkPressed = link => {
     Linking.openURL(link).catch(e =>
